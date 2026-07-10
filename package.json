@@ -1,0 +1,16 @@
+{
+  "name": "clickmatch",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "deploy-api": "wrangler deploy --config wrangler.toml",
+    "dev": "wrangler dev --config wrangler.toml",
+    "db:create": "wrangler d1 create clickmatch-db",
+    "db:migrate": "wrangler d1 migrations apply clickmatch-db --remote",
+    "db:migrate:local": "wrangler d1 migrations apply clickmatch-db --local"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260701.0",
+    "wrangler": "^3.0.0"
+  }
+}

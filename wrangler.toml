@@ -1,0 +1,43 @@
+name = "clickmatch"
+main = "server/src/index.ts"
+compatibility_date = "2026-07-10"
+compatibility_flags = ["nodejs_compat"]
+
+# ── Durable Objects ────────────────────────────────────
+
+[[durable_objects.bindings]]
+name = "CANVAS_ROOM"
+class_name = "CanvasRoom"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["CanvasRoom"]
+
+# ── D1 Database ────────────────────────────────────────
+
+[[d1_databases]]
+binding = "DB"
+database_name = "clickmatch-db"
+database_id = ""
+
+# ── R2 Buckets ─────────────────────────────────────────
+
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "clickmatch-assets"
+
+# ── Environment Variables ──────────────────────────────
+
+[vars]
+CANVAS_WIDTH = "1920"
+CANVAS_HEIGHT = "1440"
+
+# Set via `wrangler secret put JWT_SECRET`
+# [env.production.vars]
+# JWT_SECRET = ""  # Set via secrets
+
+# ── Observability ──────────────────────────────────────
+
+[observability]
+enabled = true
+head_sampling_rate = 1
