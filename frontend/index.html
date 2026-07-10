@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ClickMatch</title>
+<!-- PayPal JS SDK — replace CLIENT_ID before going live -->
+<script src="https://www.paypal.com/sdk/js?client-id=CLIENT_ID&currency=USD" data-sdk-integration-source="button-factory"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#fff;color:#222;min-height:100vh;overflow-x:hidden}
@@ -57,9 +59,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 .color-swatch{width:100%;aspect-ratio:1;border-radius:3px;border:1px solid #ddd;cursor:pointer;transition:transform .12s}
 .color-swatch:hover{transform:scale(1.25);z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .color-swatch.selected{border:2px solid #333;box-shadow:0 0 0 1px #fff,0 0 0 3px #333}
-#buy-clicks{width:100%;padding:12px;background:#111;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;letter-spacing:.5px;transition:background .15s}
-#buy-clicks:hover{background:#333}
+
+/* PayPal button container */
+#paypal-btn-container{margin-bottom:6px}
 #clicks-remain{text-align:center;font-size:12px;color:#bbb;margin-top:10px}
+#clicks-remain .count{font-weight:700;color:#333}
+.buy-status{text-align:center;font-size:12px;color:#4a4;margin-top:4px}
 
 /* right panel: anonymous chat */
 #right-panel{position:absolute;right:0;top:0;width:280px;height:100vh;background:#fafafa;border-left:1px solid #eee;z-index:99;transform:translateX(100%);transition:transform .3s ease;display:flex;flex-direction:column;padding:80px 16px 20px}
@@ -152,8 +157,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
   <div id="left-panel">
     <h3 data-i18n="colors">颜色</h3>
     <div id="color-grid"></div>
-    <button id="buy-clicks" data-action="buy-clicks" data-i18n="buy_clicks">$1 → 100次点击</button>
-    <div id="clicks-remain"><span data-i18n="remaining">剩余</span>: <span id="click-count">0</span></div>
+    <div id="paypal-btn-container"></div>
+    <div class="buy-status" id="buy-status"></div>
+    <div id="clicks-remain"><span data-i18n="remaining">剩余</span>: <span id="click-count" class="count">0</span></div>
   </div>
 
   <div id="right-panel">
@@ -169,17 +175,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 <script>
 "use strict";
 
+// ═══════════ CONFIG ═══════════
+var API_BASE = "https://clickmatch-api.your-domain.workers.dev";
+// Set your PayPal Client ID here after registering at developer.paypal.com
+var PAYPAL_CLIENT_ID = "CLIENT_ID";
+
 // ═══════════ i18n ═══════════
 var I18N = {
-  zh:{phase1_live:"第一阶段火热进行中",phase1:"第一阶段",phase2:"第二阶段",phase3:"第三阶段",phase4:"第四阶段",phase1_dates:"第一阶段由2026.7.10开始，截止到2026.7.23",more_phases:"后续阶段尽情期待",back:"返回",colors:"颜色",buy_clicks:"$1 → 100次点击",remaining:"剩余",live_chat:"实时聊天",chat_placeholder:"说点什么...",send:"发送",no_clicks:"没有剩余点击次数"},
-  en:{phase1_live:"Phase 1 Now Live",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: July 10 – July 23, 2026",more_phases:"More phases coming soon",back:"Back",colors:"Colors",buy_clicks:"$1 → 100 Clicks",remaining:"Remaining",live_chat:"Live Chat",chat_placeholder:"Say something...",send:"Send",no_clicks:"No clicks remaining"},
-  ja:{phase1_live:"フェーズ1 開催中",phase1:"フェーズ1",phase2:"フェーズ2",phase3:"フェーズ3",phase4:"フェーズ4",phase1_dates:"フェーズ1: 2026.7.10 – 7.23",more_phases:"続くフェーズをお楽しみに",back:"戻る",colors:"色",buy_clicks:"$1 → 100クリック",remaining:"残り",live_chat:"ライブチャット",chat_placeholder:"何か話す...",send:"送信",no_clicks:"クリック残数なし"},
-  ko:{phase1_live:"1단계 진행 중",phase1:"1단계",phase2:"2단계",phase3:"3단계",phase4:"4단계",phase1_dates:"1단계: 2026.7.10 – 7.23",more_phases:"다음 단계를 기대해주세요",back:"뒤로",colors:"색상",buy_clicks:"$1 → 100클릭",remaining:"남음",live_chat:"실시간 채팅",chat_placeholder:"이야기하기...",send:"전송",no_clicks:"클릭 횟수 없음"},
-  fr:{phase1_live:"Phase 1 en cours",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: 10 – 23 juillet 2026",more_phases:"Prochaines phases à venir",back:"Retour",colors:"Couleurs",buy_clicks:"$1 → 100 clics",remaining:"Restant",live_chat:"Chat en direct",chat_placeholder:"Dites quelque chose...",send:"Envoyer",no_clicks:"Plus de clics"},
-  de:{phase1_live:"Phase 1 läuft",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: 10. Juli – 23. Juli 2026",more_phases:"Weitere Phasen folgen",back:"Zurück",colors:"Farben",buy_clicks:"$1 → 100 Klicks",remaining:"Verbleibend",live_chat:"Live-Chat",chat_placeholder:"Sag etwas...",send:"Senden",no_clicks:"Keine Klicks übrig"},
-  es:{phase1_live:"Fase 1 en curso",phase1:"Fase 1",phase2:"Fase 2",phase3:"Fase 3",phase4:"Fase 4",phase1_dates:"Fase 1: 10 – 23 julio 2026",more_phases:"Próximas fases pronto",back:"Volver",colors:"Colores",buy_clicks:"$1 → 100 clics",remaining:"Restante",live_chat:"Chat en vivo",chat_placeholder:"Di algo...",send:"Enviar",no_clicks:"Sin clics restantes"},
-  ar:{phase1_live:"المرحلة الأولى جارية",phase1:"المرحلة ١",phase2:"المرحلة ٢",phase3:"المرحلة ٣",phase4:"المرحلة ٤",phase1_dates:"المرحلة الأولى: ١٠-٢٣ يوليو ٢٠٢٦",more_phases:"المزيد من المراحل قريباً",back:"رجوع",colors:"الألوان",buy_clicks:"$1 → 100 نقرة",remaining:"متبقي",live_chat:"دردشة مباشرة",chat_placeholder:"قل شيئاً...",send:"إرسال",no_clicks:"لا توجد نقرات متبقية"},
-  ru:{phase1_live:"Фаза 1 идёт",phase1:"Фаза 1",phase2:"Фаза 2",phase3:"Фаза 3",phase4:"Фаза 4",phase1_dates:"Фаза 1: 10–23 июля 2026",more_phases:"Следующие фазы скоро",back:"Назад",colors:"Цвета",buy_clicks:"$1 → 100 кликов",remaining:"Осталось",live_chat:"Чат",chat_placeholder:"Скажите что-нибудь...",send:"Отправить",no_clicks:"Клики закончились"}
+  zh:{phase1_live:"第一阶段火热进行中",phase1:"第一阶段",phase2:"第二阶段",phase3:"第三阶段",phase4:"第四阶段",phase1_dates:"第一阶段由2026.7.10开始，截止到2026.7.23",more_phases:"后续阶段尽情期待",back:"返回",colors:"颜色",buy_clicks:"$1 → 100次点击",remaining:"剩余",live_chat:"实时聊天",chat_placeholder:"说点什么...",send:"发送",no_clicks:"没有剩余点击次数",paid:"已购买100次点击！",paying:"支付处理中..."},
+  en:{phase1_live:"Phase 1 Now Live",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: July 10 – July 23, 2026",more_phases:"More phases coming soon",back:"Back",colors:"Colors",buy_clicks:"$1 → 100 Clicks",remaining:"Remaining",live_chat:"Live Chat",chat_placeholder:"Say something...",send:"Send",no_clicks:"No clicks remaining",paid:"100 clicks purchased!",paying:"Processing payment..."},
+  ja:{phase1_live:"フェーズ1 開催中",phase1:"フェーズ1",phase2:"フェーズ2",phase3:"フェーズ3",phase4:"フェーズ4",phase1_dates:"フェーズ1: 2026.7.10 – 7.23",more_phases:"続くフェーズをお楽しみに",back:"戻る",colors:"色",buy_clicks:"$1 → 100クリック",remaining:"残り",live_chat:"ライブチャット",chat_placeholder:"何か話す...",send:"送信",no_clicks:"クリック残数なし",paid:"100クリック購入！",paying:"決済処理中..."},
+  ko:{phase1_live:"1단계 진행 중",phase1:"1단계",phase2:"2단계",phase3:"3단계",phase4:"4단계",phase1_dates:"1단계: 2026.7.10 – 7.23",more_phases:"다음 단계를 기대해주세요",back:"뒤로",colors:"색상",buy_clicks:"$1 → 100클릭",remaining:"남음",live_chat:"실시간 채팅",chat_placeholder:"이야기하기...",send:"전송",no_clicks:"클릭 횟수 없음",paid:"100클릭 구매!",paying:"결제 처리 중..."},
+  fr:{phase1_live:"Phase 1 en cours",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: 10 – 23 juillet 2026",more_phases:"Prochaines phases à venir",back:"Retour",colors:"Couleurs",buy_clicks:"$1 → 100 clics",remaining:"Restant",live_chat:"Chat en direct",chat_placeholder:"Dites quelque chose...",send:"Envoyer",no_clicks:"Plus de clics",paid:"100 clics achetés !",paying:"Paiement en cours..."},
+  de:{phase1_live:"Phase 1 läuft",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: 10. Juli – 23. Juli 2026",more_phases:"Weitere Phasen folgen",back:"Zurück",colors:"Farben",buy_clicks:"$1 → 100 Klicks",remaining:"Verbleibend",live_chat:"Live-Chat",chat_placeholder:"Sag etwas...",send:"Senden",no_clicks:"Keine Klicks übrig",paid:"100 Klicks gekauft!",paying:"Zahlung wird verarbeitet..."},
+  es:{phase1_live:"Fase 1 en curso",phase1:"Fase 1",phase2:"Fase 2",phase3:"Fase 3",phase4:"Fase 4",phase1_dates:"Fase 1: 10 – 23 julio 2026",more_phases:"Próximas fases pronto",back:"Volver",colors:"Colores",buy_clicks:"$1 → 100 clics",remaining:"Restante",live_chat:"Chat en vivo",chat_placeholder:"Di algo...",send:"Enviar",no_clicks:"Sin clics restantes",paid:"¡100 clics comprados!",paying:"Procesando pago..."},
+  ar:{phase1_live:"المرحلة الأولى جارية",phase1:"المرحلة ١",phase2:"المرحلة ٢",phase3:"المرحلة ٣",phase4:"المرحلة ٤",phase1_dates:"المرحلة الأولى: ١٠-٢٣ يوليو ٢٠٢٦",more_phases:"المزيد من المراحل قريباً",back:"رجوع",colors:"الألوان",buy_clicks:"$1 → 100 نقرة",remaining:"متبقي",live_chat:"دردشة مباشرة",chat_placeholder:"قل شيئاً...",send:"إرسال",no_clicks:"لا توجد نقرات متبقية",paid:"تم شراء 100 نقرة!",paying:"جاري معالجة الدفع..."},
+  ru:{phase1_live:"Фаза 1 идёт",phase1:"Фаза 1",phase2:"Фаза 2",phase3:"Фаза 3",phase4:"Фаза 4",phase1_dates:"Фаза 1: 10–23 июля 2026",more_phases:"Следующие фазы скоро",back:"Назад",colors:"Цвета",buy_clicks:"$1 → 100 кликов",remaining:"Осталось",live_chat:"Чат",chat_placeholder:"Скажите что-нибудь...",send:"Отправить",no_clicks:"Клики закончились",paid:"100 кликов куплено!",paying:"Обработка платежа..."}
 };
 
 var lang = "zh";
@@ -202,6 +213,34 @@ function setLang(l) {
   for (var k = 0; k < phs.length; k++) {
     phs[k].placeholder = t(phs[k].dataset.i18nPlaceholder);
   }
+}
+
+// ═══════════ SESSION MANAGEMENT ═══════════
+var sessionId = localStorage.getItem("cm_session_id");
+var clicksRemaining = 0;
+var serverClicks = 0;
+
+function initSession() {
+  if (!sessionId) {
+    sessionId = "sess_" + crypto.randomUUID();
+    localStorage.setItem("cm_session_id", sessionId);
+  }
+
+  // Sync with server to get actual click balance
+  fetch(API_BASE + "/api/session?session_id=" + encodeURIComponent(sessionId))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      serverClicks = data.clicks || 0;
+      // Merge: server clicks + any existing localStorage clicks from before
+      var localClicks = parseInt(localStorage.getItem("cm_clicks") || "0", 10);
+      clicksRemaining = Math.max(serverClicks, localClicks);
+      updateClickCount();
+    })
+    .catch(function() {
+      // Offline fallback: use localStorage
+      clicksRemaining = parseInt(localStorage.getItem("cm_clicks") || "0", 10);
+      updateClickCount();
+    });
 }
 
 // ═══════════ CANVAS ENGINE ═══════════
@@ -231,11 +270,10 @@ var COLORS = [
 ];
 var selectedColor = COLORS[0];
 var zoom = 0.4, panX = 0, panY = 0;
-var clicksRemaining = parseInt(localStorage.getItem("cm_clicks") || "0", 10);
-var gridImageData = null;  // pre-rendered grid layer
-var paintImageData = null; // user-placed pixels layer
+var gridImageData = null;
+var paintImageData = null;
 
-/* Pre-render the 1920x1440 grid as an ImageData buffer */
+/* Pre-render the grid as an ImageData buffer */
 function prerenderGrid() {
   gridImageData = document.getElementById("pixel-canvas").getContext("2d").createImageData(W, H);
   var d = gridImageData.data;
@@ -255,13 +293,8 @@ function prerenderGrid() {
 function compositeCanvas() {
   var c = document.getElementById("pixel-canvas");
   var ctx = c.getContext("2d");
-  // Start with grid
   ctx.putImageData(gridImageData, 0, 0);
-  // Overlay user pixels (if any)
   if (paintImageData) {
-    var src = paintImageData.data;
-    var dstCtx = c.getContext("2d");
-    // For performance, use drawImage from an offscreen canvas
     var off = document.createElement("canvas");
     off.width = W; off.height = H;
     var offCtx = off.getContext("2d");
@@ -275,7 +308,7 @@ function openCanvas() {
   document.getElementById("canvas-page").style.display = "block";
   buildCanvas();
   buildChat();
-  updateClickCount();
+  initSession();
 }
 
 function closeCanvas() {
@@ -290,10 +323,8 @@ function buildCanvas() {
   var ctx = c.getContext("2d");
   ctx.imageSmoothingEnabled = false;
 
-  // Pre-render grid once
   if (!gridImageData) prerenderGrid();
 
-  // Init paint layer from localStorage
   if (!paintImageData) {
     var saved = localStorage.getItem("cm_pixels");
     if (saved) {
@@ -311,7 +342,7 @@ function buildCanvas() {
     } else {
       paintImageData = ctx.createImageData(W, H);
       for (var i = 0; i < paintImageData.data.length; i += 4) {
-        paintImageData.data[i+3] = 0; // transparent initially
+        paintImageData.data[i+3] = 0;
       }
     }
   }
@@ -334,6 +365,9 @@ function buildCanvas() {
     });
     grid.appendChild(sw);
   });
+
+  // Build PayPal button
+  buildPayPalButton();
 
   // Fit with breathing room
   var vw = window.innerWidth - 260;
@@ -369,7 +403,7 @@ function buildCanvas() {
   });
   window.addEventListener("mouseup", function() { dragging = false; });
 
-  // Place pixel
+  // Place pixel (uses server-side session clicks when available)
   c.addEventListener("click", function(e) {
     if (dragging) return;
     if (clicksRemaining <= 0) { alert(t("no_clicks")); return; }
@@ -377,6 +411,18 @@ function buildCanvas() {
     var x = Math.floor((e.clientX - rect.left) / zoom);
     var y = Math.floor((e.clientY - rect.top) / zoom);
     if (x < 0 || x >= W || y < 0 || y >= H) return;
+
+    // Optimistic: deduct locally, sync with server async
+    clicksRemaining--;
+    localStorage.setItem("cm_clicks", clicksRemaining);
+    updateClickCount();
+
+    // Tell server to consume one click
+    fetch(API_BASE + "/api/session/consume-click", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({session_id: sessionId})
+    }).catch(function(){}); // fire-and-forget
 
     // Store in paint layer
     var idx = (y * W + x) * 4;
@@ -392,19 +438,13 @@ function buildCanvas() {
     paintImageData.data[idx + 2] = rgb.b;
     paintImageData.data[idx + 3] = 255;
 
-    // Persist to localStorage
     var savedPixels = JSON.parse(localStorage.getItem("cm_pixels") || "{}");
     var pxIdx = y * W + x;
     var colorVal = (rgb.r << 16) | (rgb.g << 8) | rgb.b;
     savedPixels[pxIdx] = colorVal;
     localStorage.setItem("cm_pixels", JSON.stringify(savedPixels));
 
-    // Re-render composite
     compositeCanvas();
-
-    clicksRemaining--;
-    localStorage.setItem("cm_clicks", clicksRemaining);
-    updateClickCount();
   });
 
   // Pinch zoom (mobile)
@@ -450,10 +490,75 @@ function updateClickCount() {
   document.getElementById("click-count").textContent = clicksRemaining;
 }
 
-function buyClicks() {
-  clicksRemaining += 100;
-  localStorage.setItem("cm_clicks", clicksRemaining);
-  updateClickCount();
+// ═══════════ PAYPAL INTEGRATION ═══════════
+function buildPayPalButton() {
+  var container = document.getElementById("paypal-btn-container");
+  container.innerHTML = "";
+
+  if (PAYPAL_CLIENT_ID === "CLIENT_ID") {
+    container.innerHTML = "<button id=\"buy-clicks\" data-action=\"buy-clicks\" data-i18n=\"buy_clicks\" style=\"width:100%;padding:12px;background:#0070ba;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;letter-spacing:.5px\">$1 → 100次点击</button>";
+    return;
+  }
+
+  // Render real PayPal button
+  if (window.paypal) {
+    paypal.Buttons({
+      style: {
+        layout: "vertical",
+        color:  "blue",
+        shape:  "rect",
+        label:  "paypal"
+      },
+      createOrder: function() {
+        document.getElementById("buy-status").textContent = t("paying");
+        return fetch(API_BASE + "/api/paypal/create-order", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            session_id: sessionId,
+            amount_cents: 100
+          })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) { return data.order_id; })
+        .catch(function(err) {
+          document.getElementById("buy-status").textContent = "Error. Please try again.";
+          throw err;
+        });
+      },
+      onApprove: function(data) {
+        return fetch(API_BASE + "/api/paypal/capture-order", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            order_id: data.orderID,
+            session_id: sessionId
+          })
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(result) {
+          if (result.success) {
+            clicksRemaining = result.clicks;
+            localStorage.setItem("cm_clicks", clicksRemaining);
+            updateClickCount();
+            document.getElementById("buy-status").textContent = t("paid");
+            setTimeout(function() {
+              document.getElementById("buy-status").textContent = "";
+            }, 8000);
+          } else {
+            document.getElementById("buy-status").textContent = "Error: " + (result.error || "payment failed");
+          }
+        })
+        .catch(function() {
+          document.getElementById("buy-status").textContent = "Server error. Clicks not credited.";
+        });
+      },
+      onError: function(err) {
+        console.error("PayPal error:", err);
+        document.getElementById("buy-status").textContent = "Payment error. Please try again.";
+      }
+    }).render("#paypal-btn-container");
+  }
 }
 
 // ═══════════ PANELS ═══════════
@@ -508,7 +613,7 @@ function escHtml(s) {
   return d.innerHTML;
 }
 
-// ═══════════ EVENT DELEGATION (NO onclick!!) ═══════════
+// ═══════════ EVENT DELEGATION ═══════════
 document.addEventListener("click", function(e) {
   var el = e.target.closest("[data-action]");
   if (!el) return;
@@ -517,8 +622,17 @@ document.addEventListener("click", function(e) {
   if (action === "close-canvas")    closeCanvas();
   if (action === "toggle-left")     toggleLeft();
   if (action === "toggle-right")    toggleRight();
-  if (action === "buy-clicks")      buyClicks();
   if (action === "send-chat")       sendChat();
+  if (action === "buy-clicks") {
+    // Fallback when PayPal SDK not loaded — simulate purchase for testing
+    clicksRemaining += 100;
+    localStorage.setItem("cm_clicks", clicksRemaining);
+    updateClickCount();
+    document.getElementById("buy-status").textContent = t("paid");
+    setTimeout(function() {
+      document.getElementById("buy-status").textContent = "";
+    }, 5000);
+  }
 }, true);
 
 // language buttons
@@ -535,6 +649,7 @@ document.addEventListener("keydown", function(e) {
   }
 });
 
+// Init on load
 updateClickCount();
 </script>
 </body>

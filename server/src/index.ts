@@ -6,6 +6,7 @@ import { authenticateRequest, hashPassword, verifyPassword, createToken } from '
 
 export { CanvasRoom } from './canvas-room'; // Required for DO binding
 import { DB } from './db';
+import { createOrder, captureOrder } from './paypal';
 import {
   validateEmail,
   validatePassword,
@@ -140,6 +141,26 @@ export default {
         const id = env.CANVAS_ROOM.idFromName('canvas-room');
         const stub = env.CANVAS_ROOM.get(id);
         return stub.fetch(request);
+      }
+
+      // ===================== PayPal Payment =====================
+
+      if (path === '/api/paypal/create-order' && method === 'POST') {
+        return handlePayPalCreateOrder(request, env);
+      }
+
+      if (path === '/api/paypal/capture-order' && method === 'POST') {
+        return handlePayPalCaptureOrder(request, db, env);
+      }
+
+      // ===================== Session (No-Auth) =====================
+
+      if (path === '/api/session' && method === 'GET') {
+        return handleSessionGet(request, db);
+      }
+
+      if (path === '/api/session/consume-click' && method === 'POST') {
+        return handleConsumeClick(request, db);
       }
 
       // ===================== 404 =====================
@@ -467,4 +488,144 @@ async function handleLeaderboard(
   const rankings = await db.getLeaderboard(limit);
 
   return json({ rankings });
+}
+
+// ===================== PayPal Handlers =====================
+
+/**
+ * POST /api/paypal/create-order
+ *
+ * Request:  { session_id: string, amount_cents: number }
+ * Response: { order_id: string }
+ *
+ * Creates a PayPal order server-side and returns the order ID.
+ * The client uses this ID to render the PayPal button and trigger approval.
+ */
+async function handlePayPalCreateOrder(
+  request: Request,
+  env: Env,
+): Promise<Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json() as Record<string, unknown>;
+  } catch {
+    return error('Invalid JSON body');
+  }
+
+  const { session_id, amount_cents } = body;
+
+  if (typeof session_id !== 'string' || !session_id) {
+    return error('session_id is required');
+  }
+
+  const amount = typeof amount_cents === 'number' ? amount_cents : 100;
+
+  try {
+    const order = await createOrder(env, amount);
+    return json({ order_id: order.id });
+  } catch (err) {
+    console.error('PayPal create order error:', err);
+    return error('Payment service unavailable', 503);
+  }
+}
+
+/**
+ * POST /api/paypal/capture-order
+ *
+ * Request:  { order_id: string, session_id: string }
+ * Response: { success: true, clicks: number }
+ *
+ * Captures (completes) a PayPal order after buyer approval.
+ * On success, credits the session with 100 clicks.
+ */
+async function handlePayPalCaptureOrder(
+  request: Request,
+  db: DB,
+  env: Env,
+): Promise<Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json() as Record<string, unknown>;
+  } catch {
+    return error('Invalid JSON body');
+  }
+
+  const { order_id, session_id } = body;
+
+  if (typeof order_id !== 'string' || !order_id) {
+    return error('order_id is required');
+  }
+  if (typeof session_id !== 'string' || !session_id) {
+    return error('session_id is required');
+  }
+
+  try {
+    const captured = await captureOrder(env, order_id);
+    if (captured.status !== 'COMPLETED') {
+      return error(`Payment not completed: ${captured.status}`, 402);
+    }
+
+    // Credit 100 clicks to the session
+    const result = await db.addSessionClicks(session_id, 100);
+
+    return json({ success: true, clicks: result.clicks });
+  } catch (err) {
+    console.error('PayPal capture error:', err);
+    return error('Payment processing failed', 503);
+  }
+}
+
+// ===================== Session Handlers (No-Auth) =====================
+
+/**
+ * GET /api/session?session_id=xxx
+ *
+ * Returns the session's current click balance.
+ * Session is auto-created if it doesn't exist.
+ */
+async function handleSessionGet(
+  request: Request,
+  db: DB,
+): Promise<Response> {
+  const url = new URL(request.url);
+  const sessionId = url.searchParams.get('session_id');
+
+  if (!sessionId) {
+    // Generate a new session ID for the client
+    const newId = crypto.randomUUID();
+    const result = await db.getOrCreateSession(newId);
+    return json({ session_id: newId, clicks: result.clicks });
+  }
+
+  const result = await db.getOrCreateSession(sessionId);
+  return json({ session_id: sessionId, clicks: result.clicks });
+}
+
+/**
+ * POST /api/session/consume-click
+ *
+ * Request:  { session_id: string }
+ * Response: { clicks: number }
+ *
+ * Consumes 1 click from the session balance.
+ * Called before placing a pixel on the canvas.
+ */
+async function handleConsumeClick(
+  request: Request,
+  db: DB,
+): Promise<Response> {
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json() as Record<string, unknown>;
+  } catch {
+    return error('Invalid JSON body');
+  }
+
+  const sessionId = body.session_id as string;
+  if (typeof sessionId !== 'string' || !sessionId) {
+    return error('session_id is required');
+  }
+
+  const result = await db.consumeClick(sessionId);
+  return json({ clicks: result.clicks });
 }

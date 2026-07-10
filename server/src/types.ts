@@ -127,6 +127,22 @@ export interface ErrorResponse {
   code?: number;
 }
 
+// ===================== Session Types (No-Auth) =====================
+
+export interface Session {
+  session_id: string;
+  clicks: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// ===================== PayPal Types =====================
+
+export interface PayPalOrderRequest {
+  session_id: string;
+  amount_cents: number; // $1.00 = 100 clicks
+}
+
 // ===================== JWT Types =====================
 
 export interface JwtPayload {
@@ -144,4 +160,7 @@ export interface Env {
   PAYMENT_ADDRESS?: string;
   CANVAS_WIDTH?: string;
   CANVAS_HEIGHT?: string;
+  PAYPAL_CLIENT_ID?: string;
+  PAYPAL_CLIENT_SECRET?: string;
+  PAYPAL_API_URL?: string; // https://api-m.paypal.com (live) or https://api-m.sandbox.paypal.com (sandbox)
 }

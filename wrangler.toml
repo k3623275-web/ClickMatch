@@ -32,9 +32,11 @@ bucket_name = "clickmatch-assets"
 CANVAS_WIDTH = "2560"
 CANVAS_HEIGHT = "1600"
 
-# Set via `wrangler secret put JWT_SECRET`
-# [env.production.vars]
-# JWT_SECRET = ""  # Set via secrets
+# PayPal — set via `wrangler secret put`:
+#   PAYPAL_CLIENT_ID   — your PayPal app client ID
+#   PAYPAL_CLIENT_SECRET — your PayPal app secret
+#   PAYPAL_API_URL     — https://api-m.sandbox.paypal.com (test) or https://api-m.paypal.com (live)
+#   JWT_SECRET         — random 64+ char string for JWT signing
 
 # ── Observability ──────────────────────────────────────
 

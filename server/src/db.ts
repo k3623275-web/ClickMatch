@@ -270,6 +270,53 @@ export class DB {
 
   // ===================== Online Players =====================
 
+  // ===================== Sessions (No-Auth) =====================
+
+  async getOrCreateSession(sessionId: string): Promise<{ clicks: number }> {
+    await this.d1
+      .prepare(
+        `INSERT INTO sessions (session_id, clicks) VALUES (?, 0)
+         ON CONFLICT(session_id) DO UPDATE SET updated_at = datetime('now')`,
+      )
+      .bind(sessionId)
+      .run();
+    const row = await this.d1
+      .prepare('SELECT clicks FROM sessions WHERE session_id = ?')
+      .bind(sessionId)
+      .first<{ clicks: number }>();
+    return { clicks: row?.clicks ?? 0 };
+  }
+
+  async addSessionClicks(sessionId: string, delta: number): Promise<{ clicks: number }> {
+    await this.d1
+      .prepare('UPDATE sessions SET clicks = clicks + ?, updated_at = datetime("now") WHERE session_id = ?')
+      .bind(delta, sessionId)
+      .run();
+    const row = await this.d1
+      .prepare('SELECT clicks FROM sessions WHERE session_id = ?')
+      .bind(sessionId)
+      .first<{ clicks: number }>();
+    return { clicks: row?.clicks ?? 0 };
+  }
+
+  async consumeClick(sessionId: string): Promise<{ clicks: number }> {
+    // First ensure session exists and get current clicks
+    const row = await this.d1
+      .prepare('SELECT clicks FROM sessions WHERE session_id = ?')
+      .bind(sessionId)
+      .first<{ clicks: number }>();
+    if (!row || row.clicks <= 0) return { clicks: 0 };
+    await this.d1
+      .prepare('UPDATE sessions SET clicks = clicks - 1, updated_at = datetime("now") WHERE session_id = ? AND clicks > 0')
+      .bind(sessionId)
+      .run();
+    const updated = await this.d1
+      .prepare('SELECT clicks FROM sessions WHERE session_id = ?')
+      .bind(sessionId)
+      .first<{ clicks: number }>();
+    return { clicks: updated?.clicks ?? 0 };
+  }
+
   /**
    * Approximate online player count: distinct users who clicked in the last 5 minutes.
    * For Phase 1 this is a reasonable proxy. A future upgrade could use Durable Object
