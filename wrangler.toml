@@ -29,8 +29,8 @@ bucket_name = "clickmatch-assets"
 # ── Environment Variables ──────────────────────────────
 
 [vars]
-CANVAS_WIDTH = "1920"
-CANVAS_HEIGHT = "1440"
+CANVAS_WIDTH = "1000"
+CANVAS_HEIGHT = "1000"
 
 # Set via `wrangler secret put JWT_SECRET`
 # [env.production.vars]
