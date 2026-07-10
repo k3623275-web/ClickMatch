@@ -3,182 +3,383 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClickMatch — Global Pixel Canvas</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='1' y='1' width='3' height='3' fill='%2300FF88'/%3E%3Crect x='5' y='1' width='3' height='3' fill='%23FF4444'/%3E%3Crect x='9' y='1' width='3' height='3' fill='%234488FF'/%3E%3Crect x='12' y='1' width='3' height='3' fill='%23FFCC00'/%3E%3Crect x='1' y='5' width='3' height='3' fill='%238844CC'/%3E%3Crect x='5' y='5' width='3' height='3' fill='%2300FF88'/%3E%3Crect x='9' y='5' width='3' height='3' fill='%23FF4444'/%3E%3Crect x='12' y='5' width='3' height='3' fill='%234488FF'/%3E%3Crect x='1' y='9' width='3' height='3' fill='%23FFCC00'/%3E%3Crect x='5' y='9' width='3' height='3' fill='%238844CC'/%3E%3Crect x='9' y='9' width='3' height='3' fill='%2300FF88'/%3E%3Crect x='12' y='9' width='3' height='3' fill='%23FF4444'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="css/style.css">
+<title>A Profound Social Experiment</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;background:#fff;color:#222;min-height:100vh;overflow-x:hidden}
+
+/* ── Landing ── */
+#landing{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;position:relative}
+#landing .title{position:absolute;top:32px;left:40px;font-size:28px;font-weight:700;letter-spacing:1px;color:#111}
+#phases{display:flex;gap:60px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:-40px}
+.phase-wrapper{display:flex;flex-direction:column;align-items:center;gap:12px;position:relative}
+.phase-circle{width:120px;height:120px;border-radius:50%;border:2px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:300;color:#888;cursor:default;transition:all .2s;background:#fff;position:relative}
+.phase-circle.active{border-color:#333;color:#111;cursor:pointer}
+.phase-circle.active:hover{background:#f5f5f5;transform:scale(1.05)}
+.phase-circle.locked{background:#fafafa;border-style:dashed}
+.phase-circle .lock{font-size:20px;color:#bbb}
+.phase-label{font-size:14px;color:#666;text-align:center}
+/* speech bubble */
+.bubble{position:absolute;top:-50px;right:-120px;background:#333;color:#fff;padding:8px 16px;border-radius:18px;font-size:13px;white-space:nowrap;animation:pulse 2s ease-in-out infinite}
+.bubble::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #333}
+@keyframes pulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+/* arrow between circles */
+.phase-arrow{font-size:28px;color:#ccc;margin:0 -30px}
+/* footer */
+#landing footer{position:absolute;bottom:40px;text-align:center;font-size:13px;color:#999;line-height:1.8}
+
+/* lang switcher */
+.lang-switch{position:absolute;bottom:40px;right:40px;display:flex;gap:8px;font-size:12px}
+.lang-switch button{background:none;border:1px solid #ddd;padding:4px 8px;border-radius:4px;cursor:pointer;color:#888;font-size:11px}
+.lang-switch button:hover{background:#f0f0f0;color:#333}
+.lang-switch button.active{background:#222;color:#fff;border-color:#222}
+
+/* ── Canvas Page ── */
+#canvas-page{display:none;width:100vw;height:100vh;position:relative;background:#fff;overflow:hidden}
+#back-btn{position:absolute;top:16px;left:16px;z-index:100;background:none;border:1px solid #ccc;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:14px;color:#555}
+#back-btn:hover{background:#f0f0f0}
+#canvas-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);overflow:hidden}
+#pixel-canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;cursor:crosshair}
+
+/* Left sidebar */
+#left-toggle,#right-toggle{position:absolute;top:50%;transform:translateY(-50%);z-index:100;background:#fff;border:1px solid #ccc;width:28px;height:60px;border-radius:4px;cursor:pointer;font-size:16px;color:#888;display:flex;align-items:center;justify-content:center;transition:all .2s}
+#left-toggle{left:0;border-left:none;border-radius:0 4px 4px 0}
+#right-toggle{right:0;border-right:none;border-radius:4px 0 0 4px}
+#left-toggle:hover,#right-toggle:hover{background:#f0f0f0;color:#333}
+#left-panel{position:absolute;left:0;top:0;height:100vh;width:240px;background:#fafafa;border-right:1px solid #eee;z-index:99;transform:translateX(-100%);transition:transform .25s ease;display:flex;flex-direction:column;padding:80px 20px 20px;overflow-y:auto}
+#left-panel.open{transform:translateX(0)}
+#left-panel h3{font-size:14px;font-weight:500;color:#888;margin-bottom:12px;text-transform:uppercase;letter-spacing:2px}
+#color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px}
+.color-swatch{width:100%;aspect-ratio:1;border-radius:4px;border:1px solid #ddd;cursor:pointer;transition:transform .1s}
+.color-swatch:hover{transform:scale(1.15)}
+.color-swatch.selected{border:2px solid #333;box-shadow:0 0 0 1px #fff,0 0 0 3px #333}
+#buy-clicks{width:100%;padding:12px;background:#111;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;letter-spacing:.5px}
+#buy-clicks:hover{background:#333}
+#clicks-remain{text-align:center;font-size:12px;color:#aaa;margin-top:8px}
+
+/* Right sidebar */
+#right-panel{position:absolute;right:0;top:0;height:100vh;width:280px;background:#fafafa;border-left:1px solid #eee;z-index:99;transform:translateX(100%);transition:transform .25s ease;display:flex;flex-direction:column;padding:80px 16px 20px}
+#right-panel.open{transform:translateX(0)}
+#right-panel h3{font-size:14px;font-weight:500;color:#888;margin-bottom:12px;text-transform:uppercase;letter-spacing:2px}
+#chat-msgs{flex:1;overflow-y:auto;font-size:13px;line-height:1.6;margin-bottom:12px}
+.chat-msg{padding:4px 0;border-bottom:1px solid #f3f3f3}
+.chat-msg .time{font-size:10px;color:#ccc;margin-right:6px}
+.chat-area{display:flex;gap:6px}
+#chat-input{flex:1;padding:8px 10px;border:1px solid #ddd;border-radius:4px;font-size:13px;outline:none;font-family:inherit}
+#chat-input:focus{border-color:#aaa}
+#chat-send{padding:8px 16px;background:#111;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer}
+#chat-send:hover{background:#333}
+
+/* ── Mobile tweaks ── */
+@media(max-width:768px){
+  #landing .title{position:static;text-align:center;margin-bottom:40px;font-size:22px}
+  #phases{gap:30px;margin-top:0}
+  .phase-circle{width:80px;height:80px;font-size:28px}
+  .bubble{right:-80px;top:-45px;font-size:11px;padding:6px 12px}
+  .lang-switch{bottom:20px;right:20px}
+}
+</style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════
-     TOP BAR
-     ══════════════════════════════════════════════════════ -->
-<div id="topBar">
-  <div class="topbar-left">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
-      <rect x="2" y="2" width="6" height="6" fill="#00FF88"/>
-      <rect x="9" y="2" width="6" height="6" fill="#FF4444"/>
-      <rect x="16" y="2" width="6" height="6" fill="#4488FF"/>
-      <rect x="23" y="2" width="6" height="6" fill="#FFCC00"/>
-      <rect x="2" y="9" width="6" height="6" fill="#8844CC"/>
-      <rect x="9" y="9" width="6" height="6" fill="#00FF88"/>
-      <rect x="16" y="9" width="6" height="6" fill="#FF4444"/>
-      <rect x="23" y="9" width="6" height="6" fill="#4488FF"/>
-      <rect x="2" y="16" width="6" height="6" fill="#FFCC00"/>
-      <rect x="9" y="16" width="6" height="6" fill="#8844CC"/>
-      <rect x="16" y="16" width="6" height="6" fill="#00FF88"/>
-      <rect x="23" y="16" width="6" height="6" fill="#FF4444"/>
-      <rect x="2" y="23" width="6" height="6" fill="#4488FF"/>
-      <rect x="9" y="23" width="6" height="6" fill="#FFCC00"/>
-      <rect x="16" y="23" width="6" height="6" fill="#8844CC"/>
-      <rect x="23" y="23" width="6" height="6" fill="#00FF88"/>
-    </svg>
-    CLICKMATCH
-  </div>
-
-  <div class="topbar-center">
-    <div class="countdown-label">剩余时间</div>
-    <div id="countdown">--:--:--</div>
-    <div class="countdown-label">Phase 1</div>
-  </div>
-
-  <div class="topbar-right">
-    <span id="connStatus" class="conn-status disconnected">● 未连接</span>
-    <span id="globalClicks">0</span>
-    <span style="font-size:10px;color:var(--text-disabled)">clicks</span>
-    <button class="btn-ghost" id="loginBtn">登录</button>
-    <button class="btn-primary" id="registerBtn">注册</button>
-    <div id="userInfo">
-      <span id="userName">--</span>
-      <span id="userBalance">500</span>
-      <span style="font-size:10px;color:var(--text-disabled)">剩余</span>
+<!-- ═══════════════════ LANDING ═══════════════════ -->
+<div id="landing">
+  <div class="title" data-i18n="title">A Profound Social Experiment</div>
+  <div id="phases">
+    <div class="phase-wrapper">
+      <div class="phase-circle active" onclick="openCanvas()" id="circle1">
+        1
+        <div class="bubble" data-i18n="phase1_live">Phase 1 Now Live</div>
+      </div>
+      <div class="phase-label" data-i18n="phase1">Phase 1</div>
     </div>
-    <button id="lbToggle" title="排行榜">🏆</button>
-  </div>
-</div>
 
-<!-- ══════════════════════════════════════════════════════
-     CANVAS
-     ══════════════════════════════════════════════════════ -->
-<div class="canvas-wrap">
-  <canvas id="pixelCanvas"></canvas>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     FROZEN OVERLAY
-     ══════════════════════════════════════════════════════ -->
-<div class="frozen-overlay" id="frozenOverlay">
-  <div class="frozen-content">
-    <h2>比赛结束</h2>
-    <p>画布已冻结，感谢你的参与！</p>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     BOTTOM BAR
-     ══════════════════════════════════════════════════════ -->
-<div id="bottomBar">
-  <div class="color-picker" id="colorPicker">
-    <span class="cp-label">颜色</span>
-    <button class="cp-swatch" data-color="#FF4444" style="background:#FF4444" title="Red"></button>
-    <button class="cp-swatch" data-color="#FF8800" style="background:#FF8800" title="Orange"></button>
-    <button class="cp-swatch" data-color="#FFCC00" style="background:#FFCC00" title="Yellow"></button>
-    <button class="cp-swatch" data-color="#44CC44" style="background:#44CC44" title="Green"></button>
-    <button class="cp-swatch" data-color="#00CCCC" style="background:#00CCCC" title="Cyan"></button>
-    <button class="cp-swatch" data-color="#4488FF" style="background:#4488FF" title="Blue"></button>
-    <button class="cp-swatch" data-color="#8844CC" style="background:#8844CC" title="Purple"></button>
-    <button class="cp-swatch" data-color="#FF66AA" style="background:#FF66AA" title="Pink"></button>
-    <button class="cp-swatch" data-color="#FFFFFF" style="background:#FFFFFF" title="White"></button>
-    <button class="cp-swatch" data-color="#CCCCCC" style="background:#CCCCCC" title="Light Gray"></button>
-    <button class="cp-swatch" data-color="#888888" style="background:#888888" title="Gray"></button>
-    <button class="cp-swatch" data-color="#444444" style="background:#444444" title="Dark Gray"></button>
-    <button class="cp-swatch" data-color="#000000" style="background:#000000" title="Black"></button>
-    <button class="cp-swatch" data-color="#886644" style="background:#886644" title="Brown"></button>
-    <button class="cp-swatch" data-color="#DAA520" style="background:#DAA520" title="Gold"></button>
-    <button class="cp-swatch" data-color="#88CCFF" style="background:#88CCFF" title="Sky Blue"></button>
-  </div>
-  <div class="bottom-info">
-    <span id="coordDisplay"></span>
-    <span id="zoomDisplay">100%</span>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     PHASE PREVIEW CARDS (below canvas, scrollable)
-     ══════════════════════════════════════════════════════ -->
-<div class="phase-cards" id="phaseCards"></div>
-
-<!-- ══════════════════════════════════════════════════════
-     TOAST
-     ══════════════════════════════════════════════════════ -->
-<div id="toast"></div>
-
-<!-- ══════════════════════════════════════════════════════
-     AUTH MODAL
-     ══════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="authModal">
-  <div class="modal">
-    <div class="modal-header">
-      <div class="modal-title" id="authTitle">登录</div>
-      <button class="modal-close" id="authClose">✕</button>
+    <div class="phase-wrapper">
+      <div class="phase-circle locked">2<div class="lock">🔒</div></div>
+      <div class="phase-label" data-i18n="phase2">Phase 2</div>
     </div>
-    <div class="form-group">
-      <label>邮箱</label>
-      <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
+
+    <div class="phase-wrapper">
+      <div class="phase-circle locked">3<div class="lock">🔒</div></div>
+      <div class="phase-label" data-i18n="phase3">Phase 3</div>
     </div>
-    <div class="form-group">
-      <label>密码</label>
-      <input type="password" id="authPassword" placeholder="至少8个字符" autocomplete="current-password">
+
+    <div class="phase-wrapper">
+      <div class="phase-circle locked">4<div class="lock">🔒</div></div>
+      <div class="phase-label" data-i18n="phase4">Phase 4</div>
     </div>
-    <div class="form-error" id="authError"></div>
-    <button id="authSubmit">登录</button>
+  </div>
+  <footer>
+    <div data-i18n="phase1_dates">Phase 1 runs from July 10 to July 23, 2026</div>
+    <div data-i18n="more_phases">More phases coming soon</div>
+  </footer>
+  <div class="lang-switch" id="langSwitch">
+    <button onclick="setLang('en')" class="active" data-lang="en">EN</button>
+    <button onclick="setLang('zh')" data-lang="zh">中</button>
+    <button onclick="setLang('ja')" data-lang="ja">日</button>
+    <button onclick="setLang('ko')" data-lang="ko">한</button>
+    <button onclick="setLang('fr')" data-lang="fr">FR</button>
+    <button onclick="setLang('de')" data-lang="de">DE</button>
+    <button onclick="setLang('es')" data-lang="es">ES</button>
+    <button onclick="setLang('ar')" data-lang="ar">ع</button>
+    <button onclick="setLang('ru')" data-lang="ru">РУ</button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     LEADERBOARD PANEL
-     ══════════════════════════════════════════════════════ -->
-<div id="lbPanel">
-  <div class="lb-header">
-    <div class="lb-title">🏆 排行榜</div>
-    <button id="lbClose">✕</button>
+<!-- ═══════════════════ CANVAS PAGE ═══════════════════ -->
+<div id="canvas-page">
+  <button id="back-btn" onclick="closeCanvas()">← <span data-i18n="back">Back</span></button>
+
+  <button id="left-toggle" onclick="toggleLeft()">☰</button>
+  <button id="right-toggle" onclick="toggleRight()">◀</button>
+
+  <div id="canvas-wrap">
+    <canvas id="pixel-canvas"></canvas>
   </div>
-  <div id="lbList">
-    <div class="lb-loading">打开即加载...</div>
+
+  <!-- Left panel: color picker + pay -->
+  <div id="left-panel">
+    <h3 data-i18n="colors">Colors</h3>
+    <div id="color-grid"></div>
+
+    <button id="buy-clicks" onclick="buyClicks()" data-i18n="buy_clicks">$1 → 100 Clicks</button>
+    <div id="clicks-remain"><span data-i18n="remaining">Remaining</span>: <span id="click-count">0</span></div>
+  </div>
+
+  <!-- Right panel: anonymous chat -->
+  <div id="right-panel">
+    <h3 data-i18n="live_chat">Live Chat</h3>
+    <div id="chat-msgs"></div>
+    <div class="chat-area">
+      <input id="chat-input" placeholder="Say something..." data-i18n-placeholder="chat_placeholder">
+      <button id="chat-send" onclick="sendChat()" data-i18n="send">Send</button>
+    </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════
-     SCRIPTS
-     ══════════════════════════════════════════════════════ -->
-<script src="js/canvas.js"></script>
-<script src="js/websocket.js"></script>
-<script src="js/ui.js"></script>
 <script>
-// ── Bootstrap ───────────────────────────────────────
-(function () {
-  CM.initUI();
+// ═══════════════════ i18n ═══════════════════
+const I18N = {
+en:{title:"A Profound Social Experiment",phase1_live:"Phase 1 Now Live",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1 runs from July 10 to July 23, 2026",more_phases:"More phases coming soon",back:"Back",colors:"Colors",buy_clicks:"$1 → 100 Clicks",remaining:"Remaining",live_chat:"Live Chat",chat_placeholder:"Say something...",send:"Send",no_clicks:"No clicks remaining"},
+zh:{title:"一场深刻的社会实验",phase1_live:"第一阶段火热进行中",phase1:"第一阶段",phase2:"第二阶段",phase3:"第三阶段",phase4:"第四阶段",phase1_dates:"第一阶段由2026.7.10开始，截止到2026.7.23",more_phases:"后续阶段尽情期待",back:"返回",colors:"颜色",buy_clicks:"$1 → 100次点击",remaining:"剩余",live_chat:"实时聊天",chat_placeholder:"说点什么...",send:"发送",no_clicks:"没有剩余点击次数"},
+ja:{title:"深遠なる社会実験",phase1_live:"フェーズ1 開催中",phase1:"フェーズ1",phase2:"フェーズ2",phase3:"フェーズ3",phase4:"フェーズ4",phase1_dates:"フェーズ1: 2026年7月10日～7月23日",more_phases:"続くフェーズをお楽しみに",back:"戻る",colors:"色",buy_clicks:"$1 → 100クリック",remaining:"残り",live_chat:"ライブチャット",chat_placeholder:"何か話す...",send:"送信",no_clicks:"クリック残数なし"},
+ko:{title:"심오한 사회 실험",phase1_live:"1단계 진행 중",phase1:"1단계",phase2:"2단계",phase3:"3단계",phase4:"4단계",phase1_dates:"1단계: 2026.7.10 – 7.23",more_phases:"다음 단계를 기대해주세요",back:"뒤로",colors:"색상",buy_clicks:"$1 → 100클릭",remaining:"남음",live_chat:"실시간 채팅",chat_placeholder:"이야기하기...",send:"전송",no_clicks:"클릭 횟수 없음"},
+fr:{title:"Une Expérience Sociale Profonde",phase1_live:"Phase 1 en cours",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1 : du 10 au 23 juillet 2026",more_phases:"Prochaines phases à venir",back:"Retour",colors:"Couleurs",buy_clicks:"$1 → 100 clics",remaining:"Restant",live_chat:"Chat en direct",chat_placeholder:"Dites quelque chose...",send:"Envoyer",no_clicks:"Plus de clics"},
+de:{title:"Ein tiefgreifendes Sozialexperiment",phase1_live:"Phase 1 läuft",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: 10. Juli – 23. Juli 2026",more_phases:"Weitere Phasen folgen",back:"Zurück",colors:"Farben",buy_clicks:"$1 → 100 Klicks",remaining:"Verbleibend",live_chat:"Live-Chat",chat_placeholder:"Sag etwas...",send:"Senden",no_clicks:"Keine Klicks übrig"},
+es:{title:"Un Experimento Social Profundo",phase1_live:"Fase 1 en curso",phase1:"Fase 1",phase2:"Fase 2",phase3:"Fase 3",phase4:"Fase 4",phase1_dates:"Fase 1: 10 – 23 de julio de 2026",more_phases:"Próximas fases pronto",back:"Volver",colors:"Colores",buy_clicks:"$1 → 100 clics",remaining:"Restante",live_chat:"Chat en vivo",chat_placeholder:"Di algo...",send:"Enviar",no_clicks:"Sin clics restantes"},
+ar:{title:"تجربة اجتماعية عميقة",phase1_live:"المرحلة الأولى جارية",phase1:"المرحلة ١",phase2:"المرحلة ٢",phase3:"المرحلة ٣",phase4:"المرحلة ٤",phase1_dates:"المرحلة الأولى: ١٠-٢٣ يوليو ٢٠٢٦",more_phases:"المزيد من المراحل قريباً",back:"رجوع",colors:"الألوان",buy_clicks:"$1 → 100 نقرة",remaining:"متبقي",live_chat:"دردشة مباشرة",chat_placeholder:"قل شيئاً...",send:"إرسال",no_clicks:"لا توجد نقرات متبقية"},
+ru:{title:"Глубокий Социальный Эксперимент",phase1_live:"Фаза 1 идёт",phase1:"Фаза 1",phase2:"Фаза 2",phase3:"Фаза 3",phase4:"Фаза 4",phase1_dates:"Фаза 1: 10–23 июля 2026",more_phases:"Следующие фазы скоро",back:"Назад",colors:"Цвета",buy_clicks:"$1 → 100 кликов",remaining:"Осталось",live_chat:"Чат",chat_placeholder:"Скажите что-нибудь...",send:"Отправить",no_clicks:"Клики закончились"}
+};
+let lang='en';
+function t(key){return (I18N[lang]&&I18N[lang][key])||I18N['en'][key]||key}
+function setLang(l){
+  lang=l;
+  document.querySelectorAll('.lang-switch button').forEach(b=>b.classList.toggle('active',b.dataset.lang===l));
+  document.querySelectorAll('[data-i18n]').forEach(el=>el.textContent=t(el.dataset.i18n));
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>el.placeholder=t(el.dataset.i18nPlaceholder));
+}
 
-  // Initialize canvas after DOM is laid out
-  setTimeout(() => {
-    CM.initCanvas();
-  }, 100);
+// ═══════════════════ CANVAS ═══════════════════
+const W=1920,H=1440;
+const COLORS=[
+  '#FF4444','#FF8800','#FFCC00','#44CC44','#00CCCC','#4488FF','#8844CC','#FF66AA',
+  '#000000','#444444','#888888','#CCCCCC','#FFFFFF','#886644','#DAA520','#88CCFF'
+];
+let selectedColor=COLORS[0];
+let zoom=0.4,panX=0,panY=0;
+let clicksRemaining=parseInt(localStorage.getItem('cm_clicks')||'0');
+let pixelData=null;
 
-  // For demo: start a 24h countdown
-  // In production, this comes from WS countdown message
-  setTimeout(() => {
-    CM.updateCountdown(86400); // 24 hours for demo
-    CM.updateGlobalClicks(0);
-  }, 500);
+function hexToRGB(h){
+  return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)};
+}
 
-  // Handle frozen overlay
-  const origFreeze = CM.freeze;
-  CM.freeze = function () {
-    origFreeze.call(CM);
-    document.getElementById('frozenOverlay').classList.add('show');
+function openCanvas(){
+  document.getElementById('landing').style.display='none';
+  document.getElementById('canvas-page').style.display='block';
+  initCanvas();
+  initChat();
+  updateClickCount();
+}
+
+function closeCanvas(){
+  document.getElementById('canvas-page').style.display='none';
+  document.getElementById('landing').style.display='flex';
+}
+
+function initCanvas(){
+  const c=document.getElementById('pixel-canvas');
+  c.width=W;c.height=H;
+  const ctx=c.getContext('2d');
+  ctx.imageSmoothingEnabled=false;
+
+  if(!pixelData){
+    pixelData=ctx.createImageData(W,H);
+    for(let i=0;i<pixelData.data.length;i+=4){
+      pixelData.data[i]=255;
+      pixelData.data[i+1]=255;
+      pixelData.data[i+2]=255;
+      pixelData.data[i+3]=255;
+    }
+  }
+  ctx.putImageData(pixelData,0,0);
+
+  // Color grid
+  const grid=document.getElementById('color-grid');
+  grid.innerHTML='';
+  COLORS.forEach((col,i)=>{
+    const sw=document.createElement('div');
+    sw.className='color-swatch'+(i===0?' selected':'');
+    sw.style.background=col;
+    sw.onclick=()=>{
+      selectedColor=col;
+      document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+      sw.classList.add('selected');
+    };
+    grid.appendChild(sw);
+  });
+
+  // Zoom to fit
+  const vw=window.innerWidth-60;
+  const vh=window.innerHeight-80;
+  zoom=Math.min(vw/W,vh/H,0.5);
+  updateTransform();
+
+  // Events
+  c.onwheel=e=>{
+    e.preventDefault();
+    const oldZ=zoom;
+    zoom*=e.deltaY>0?0.9:1.1;
+    zoom=Math.max(0.08,Math.min(8,zoom));
+    updateTransform();
   };
-})();
-</script>
 
+  let dragging=false,lastX,lastY;
+  c.onmousedown=e=>{
+    if(e.button===1||e.altKey){dragging=true;lastX=e.clientX;lastY=e.clientY;e.preventDefault();}
+  };
+  window.onmousemove=e=>{
+    if(!dragging)return;
+    panX+=(e.clientX-lastX)/zoom;
+    panY+=(e.clientY-lastY)/zoom;
+    lastX=e.clientX;lastY=e.clientY;
+    updateTransform();
+  };
+  window.onmouseup=()=>{dragging=false};
+
+  c.onclick=e=>{
+    if(dragging)return;
+    if(clicksRemaining<=0){alert(t('no_clicks'));return;}
+    const rect=c.getBoundingClientRect();
+    const x=Math.floor((e.clientX-rect.left)/zoom);
+    const y=Math.floor((e.clientY-rect.top)/zoom);
+    if(x<0||x>=W||y<0||y>=H)return;
+    const rgb=hexToRGB(selectedColor);
+    const idx=(y*W+x)*4;
+    pixelData.data[idx]=rgb.r;
+    pixelData.data[idx+1]=rgb.g;
+    pixelData.data[idx+2]=rgb.b;
+    c.getContext('2d').putImageData(pixelData,0,0);
+    clicksRemaining--;
+    localStorage.setItem('cm_clicks',clicksRemaining);
+    updateClickCount();
+  };
+
+  // pinch zoom support
+  let lastDist=0;
+  c.ontouchstart=e=>{
+    if(e.touches.length===2){lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);}
+  };
+  c.ontouchmove=e=>{
+    if(e.touches.length===2){
+      e.preventDefault();
+      const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      zoom*=dist/lastDist;zoom=Math.max(0.08,Math.min(8,zoom));
+      lastDist=dist;
+      updateTransform();
+    }
+  };
+}
+
+function updateTransform(){
+  const c=document.getElementById('pixel-canvas');
+  c.style.width=(W*zoom)+'px';
+  c.style.height=(H*zoom)+'px';
+  const wrap=document.getElementById('canvas-wrap');
+  wrap.style.transform=`translate(calc(-50% + ${panX*zoom}px), calc(-50% + ${panY*zoom}px))`;
+  wrap.style.left='50%';wrap.style.top='50%';
+}
+
+function updateClickCount(){
+  document.getElementById('click-count').textContent=clicksRemaining;
+}
+
+function buyClicks(){
+  // placeholder - will integrate with payment later
+  clicksRemaining+=100;
+  localStorage.setItem('cm_clicks',clicksRemaining);
+  updateClickCount();
+}
+
+// ═══════════════════ LEFT PANEL ═══════════════════
+function toggleLeft(){
+  const p=document.getElementById('left-panel');
+  p.classList.toggle('open');
+  document.getElementById('left-toggle').textContent=p.classList.contains('open')?'✕':'☰';
+}
+
+// ═══════════════════ RIGHT PANEL (CHAT) ═══════════════════
+function toggleRight(){
+  const p=document.getElementById('right-panel');
+  p.classList.toggle('open');
+  document.getElementById('right-toggle').textContent=p.classList.contains('open')?'▶':'◀';
+}
+
+function initChat(){
+  const stored=JSON.parse(localStorage.getItem('cm_chat')||'[]');
+  const box=document.getElementById('chat-msgs');
+  box.innerHTML='';
+  stored.forEach(m=>{
+    const d=document.createElement('div');
+    d.className='chat-msg';
+    d.innerHTML=`<span class="time">${m.time}</span>${escHtml(m.text)}`;
+    box.appendChild(d);
+  });
+  box.scrollTop=box.scrollHeight;
+}
+
+function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const text=inp.value.trim();
+  if(!text)return;
+  const now=new Date();
+  const time=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const msgs=JSON.parse(localStorage.getItem('cm_chat')||'[]');
+  msgs.push({text,time});
+  if(msgs.length>200)msgs.shift();
+  localStorage.setItem('cm_chat',JSON.stringify(msgs));
+  const box=document.getElementById('chat-msgs');
+  const d=document.createElement('div');
+  d.className='chat-msg';
+  d.innerHTML=`<span class="time">${time}</span>${escHtml(text)}`;
+  box.appendChild(d);
+  box.scrollTop=box.scrollHeight;
+  inp.value='';
+}
+
+function escHtml(s){
+  const d=document.createElement('div');
+  d.textContent=s;
+  return d.innerHTML;
+}
+
+// Enter to send
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.activeElement===document.getElementById('chat-input'))sendChat();
+});
+
+// Init click count on load
+updateClickCount();
+</script>
 </body>
 </html>
