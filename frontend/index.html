@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>一场深刻的社会实验</title>
+<title>ClickMatch</title>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#fff;color:#222;min-height:100vh;overflow-x:hidden}
@@ -41,7 +41,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 
 /* canvas with breathing room */
 #canvas-wrap{position:absolute;overflow:hidden;border:1px solid #eee}
-#pixel-canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;cursor:crosshair}
+#pixel-canvas{display:block;image-rendering:pixelated;-ms-interpolation-mode:nearest-neighbor;cursor:crosshair}
 
 /* left & right toggle buttons */
 #left-toggle,#right-toggle{position:absolute;top:50%;transform:translateY(-50%);z-index:100;background:#fff;border:1px solid #e0e0e0;width:30px;height:64px;cursor:pointer;font-size:16px;color:#999;display:flex;align-items:center;justify-content:center;transition:all .15s}
@@ -50,12 +50,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 #left-toggle:hover,#right-toggle:hover{background:#f5f5f5;color:#333}
 
 /* left panel: color picker + buy clicks */
-#left-panel{position:absolute;left:0;top:0;width:240px;height:100vh;background:#fafafa;border-right:1px solid #eee;z-index:99;transform:translateX(-100%);transition:transform .3s ease;display:flex;flex-direction:column;padding:80px 20px 24px;overflow-y:auto}
+#left-panel{position:absolute;left:0;top:0;width:280px;height:100vh;background:#fafafa;border-right:1px solid #eee;z-index:99;transform:translateX(-100%);transition:transform .3s ease;display:flex;flex-direction:column;padding:80px 16px 24px;overflow-y:auto}
 #left-panel.open{transform:translateX(0)}
 #left-panel h3{font-size:13px;font-weight:500;color:#999;margin-bottom:14px;text-transform:uppercase;letter-spacing:2px}
-#color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:28px}
-.color-swatch{width:100%;aspect-ratio:1;border-radius:4px;border:1px solid #ddd;cursor:pointer;transition:transform .12s}
-.color-swatch:hover{transform:scale(1.18)}
+#color-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:28px}
+.color-swatch{width:100%;aspect-ratio:1;border-radius:3px;border:1px solid #ddd;cursor:pointer;transition:transform .12s}
+.color-swatch:hover{transform:scale(1.25);z-index:2;box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .color-swatch.selected{border:2px solid #333;box-shadow:0 0 0 1px #fff,0 0 0 3px #333}
 #buy-clicks{width:100%;padding:12px;background:#111;color:#fff;border:none;border-radius:6px;font-size:14px;cursor:pointer;letter-spacing:.5px;transition:background .15s}
 #buy-clicks:hover{background:#333}
@@ -66,7 +66,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 #right-panel.open{transform:translateX(0)}
 #right-panel h3{font-size:13px;font-weight:500;color:#999;margin-bottom:12px;text-transform:uppercase;letter-spacing:2px}
 #chat-msgs{flex:1;overflow-y:auto;font-size:13px;line-height:1.7;margin-bottom:12px}
-.chat-msg{padding:6px 0;border-bottom:1px solid #f5f5f5}
+.chat-msg{padding:6px 0;border-bottom:1px solid #f5f5f5;word-break:break-word}
 .chat-msg .time{font-size:10px;color:#ccc;margin-right:8px}
 .chat-area{display:flex;gap:6px}
 #chat-input{flex:1;padding:9px 12px;border:1px solid #e0e0e0;border-radius:4px;font-size:13px;outline:none;font-family:inherit;transition:border-color .15s}
@@ -87,7 +87,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 
 <!-- ═══════════ LANDING ═══════════ -->
 <div id="landing">
-  <div class="title" data-i18n="title">一场深刻的社会实验</div>
+  <div class="title">ClickMatch</div>
 
   <div id="phases">
     <div class="phase-wrapper">
@@ -171,15 +171,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Micr
 
 // ═══════════ i18n ═══════════
 var I18N = {
-  zh:{title:"一场深刻的社会实验",phase1_live:"第一阶段火热进行中",phase1:"第一阶段",phase2:"第二阶段",phase3:"第三阶段",phase4:"第四阶段",phase1_dates:"第一阶段由2026.7.10开始，截止到2026.7.23",more_phases:"后续阶段尽情期待",back:"返回",colors:"颜色",buy_clicks:"$1 → 100次点击",remaining:"剩余",live_chat:"实时聊天",chat_placeholder:"说点什么...",send:"发送",no_clicks:"没有剩余点击次数"},
-  en:{title:"A Profound Social Experiment",phase1_live:"Phase 1 Now Live",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: July 10 – July 23, 2026",more_phases:"More phases coming soon",back:"Back",colors:"Colors",buy_clicks:"$1 → 100 Clicks",remaining:"Remaining",live_chat:"Live Chat",chat_placeholder:"Say something...",send:"Send",no_clicks:"No clicks remaining"},
-  ja:{title:"深遠なる社会実験",phase1_live:"フェーズ1 開催中",phase1:"フェーズ1",phase2:"フェーズ2",phase3:"フェーズ3",phase4:"フェーズ4",phase1_dates:"フェーズ1: 2026.7.10 – 7.23",more_phases:"続くフェーズをお楽しみに",back:"戻る",colors:"色",buy_clicks:"$1 → 100クリック",remaining:"残り",live_chat:"ライブチャット",chat_placeholder:"何か話す...",send:"送信",no_clicks:"クリック残数なし"},
-  ko:{title:"심오한 사회 실험",phase1_live:"1단계 진행 중",phase1:"1단계",phase2:"2단계",phase3:"3단계",phase4:"4단계",phase1_dates:"1단계: 2026.7.10 – 7.23",more_phases:"다음 단계를 기대해주세요",back:"뒤로",colors:"색상",buy_clicks:"$1 → 100클릭",remaining:"남음",live_chat:"실시간 채팅",chat_placeholder:"이야기하기...",send:"전송",no_clicks:"클릭 횟수 없음"},
-  fr:{title:"Une Expérience Sociale Profonde",phase1_live:"Phase 1 en cours",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: 10 – 23 juillet 2026",more_phases:"Prochaines phases à venir",back:"Retour",colors:"Couleurs",buy_clicks:"$1 → 100 clics",remaining:"Restant",live_chat:"Chat en direct",chat_placeholder:"Dites quelque chose...",send:"Envoyer",no_clicks:"Plus de clics"},
-  de:{title:"Ein tiefgreifendes Sozialexperiment",phase1_live:"Phase 1 läuft",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: 10. Juli – 23. Juli 2026",more_phases:"Weitere Phasen folgen",back:"Zurück",colors:"Farben",buy_clicks:"$1 → 100 Klicks",remaining:"Verbleibend",live_chat:"Live-Chat",chat_placeholder:"Sag etwas...",send:"Senden",no_clicks:"Keine Klicks übrig"},
-  es:{title:"Un Experimento Social Profundo",phase1_live:"Fase 1 en curso",phase1:"Fase 1",phase2:"Fase 2",phase3:"Fase 3",phase4:"Fase 4",phase1_dates:"Fase 1: 10 – 23 julio 2026",more_phases:"Próximas fases pronto",back:"Volver",colors:"Colores",buy_clicks:"$1 → 100 clics",remaining:"Restante",live_chat:"Chat en vivo",chat_placeholder:"Di algo...",send:"Enviar",no_clicks:"Sin clics restantes"},
-  ar:{title:"تجربة اجتماعية عميقة",phase1_live:"المرحلة الأولى جارية",phase1:"المرحلة ١",phase2:"المرحلة ٢",phase3:"المرحلة ٣",phase4:"المرحلة ٤",phase1_dates:"المرحلة الأولى: ١٠-٢٣ يوليو ٢٠٢٦",more_phases:"المزيد من المراحل قريباً",back:"رجوع",colors:"الألوان",buy_clicks:"$1 → 100 نقرة",remaining:"متبقي",live_chat:"دردشة مباشرة",chat_placeholder:"قل شيئاً...",send:"إرسال",no_clicks:"لا توجد نقرات متبقية"},
-  ru:{title:"Глубокий Социальный Эксперимент",phase1_live:"Фаза 1 идёт",phase1:"Фаза 1",phase2:"Фаза 2",phase3:"Фаза 3",phase4:"Фаза 4",phase1_dates:"Фаза 1: 10–23 июля 2026",more_phases:"Следующие фазы скоро",back:"Назад",colors:"Цвета",buy_clicks:"$1 → 100 кликов",remaining:"Осталось",live_chat:"Чат",chat_placeholder:"Скажите что-нибудь...",send:"Отправить",no_clicks:"Клики закончились"}
+  zh:{phase1_live:"第一阶段火热进行中",phase1:"第一阶段",phase2:"第二阶段",phase3:"第三阶段",phase4:"第四阶段",phase1_dates:"第一阶段由2026.7.10开始，截止到2026.7.23",more_phases:"后续阶段尽情期待",back:"返回",colors:"颜色",buy_clicks:"$1 → 100次点击",remaining:"剩余",live_chat:"实时聊天",chat_placeholder:"说点什么...",send:"发送",no_clicks:"没有剩余点击次数"},
+  en:{phase1_live:"Phase 1 Now Live",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: July 10 – July 23, 2026",more_phases:"More phases coming soon",back:"Back",colors:"Colors",buy_clicks:"$1 → 100 Clicks",remaining:"Remaining",live_chat:"Live Chat",chat_placeholder:"Say something...",send:"Send",no_clicks:"No clicks remaining"},
+  ja:{phase1_live:"フェーズ1 開催中",phase1:"フェーズ1",phase2:"フェーズ2",phase3:"フェーズ3",phase4:"フェーズ4",phase1_dates:"フェーズ1: 2026.7.10 – 7.23",more_phases:"続くフェーズをお楽しみに",back:"戻る",colors:"色",buy_clicks:"$1 → 100クリック",remaining:"残り",live_chat:"ライブチャット",chat_placeholder:"何か話す...",send:"送信",no_clicks:"クリック残数なし"},
+  ko:{phase1_live:"1단계 진행 중",phase1:"1단계",phase2:"2단계",phase3:"3단계",phase4:"4단계",phase1_dates:"1단계: 2026.7.10 – 7.23",more_phases:"다음 단계를 기대해주세요",back:"뒤로",colors:"색상",buy_clicks:"$1 → 100클릭",remaining:"남음",live_chat:"실시간 채팅",chat_placeholder:"이야기하기...",send:"전송",no_clicks:"클릭 횟수 없음"},
+  fr:{phase1_live:"Phase 1 en cours",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: 10 – 23 juillet 2026",more_phases:"Prochaines phases à venir",back:"Retour",colors:"Couleurs",buy_clicks:"$1 → 100 clics",remaining:"Restant",live_chat:"Chat en direct",chat_placeholder:"Dites quelque chose...",send:"Envoyer",no_clicks:"Plus de clics"},
+  de:{phase1_live:"Phase 1 läuft",phase1:"Phase 1",phase2:"Phase 2",phase3:"Phase 3",phase4:"Phase 4",phase1_dates:"Phase 1: 10. Juli – 23. Juli 2026",more_phases:"Weitere Phasen folgen",back:"Zurück",colors:"Farben",buy_clicks:"$1 → 100 Klicks",remaining:"Verbleibend",live_chat:"Live-Chat",chat_placeholder:"Sag etwas...",send:"Senden",no_clicks:"Keine Klicks übrig"},
+  es:{phase1_live:"Fase 1 en curso",phase1:"Fase 1",phase2:"Fase 2",phase3:"Fase 3",phase4:"Fase 4",phase1_dates:"Fase 1: 10 – 23 julio 2026",more_phases:"Próximas fases pronto",back:"Volver",colors:"Colores",buy_clicks:"$1 → 100 clics",remaining:"Restante",live_chat:"Chat en vivo",chat_placeholder:"Di algo...",send:"Enviar",no_clicks:"Sin clics restantes"},
+  ar:{phase1_live:"المرحلة الأولى جارية",phase1:"المرحلة ١",phase2:"المرحلة ٢",phase3:"المرحلة ٣",phase4:"المرحلة ٤",phase1_dates:"المرحلة الأولى: ١٠-٢٣ يوليو ٢٠٢٦",more_phases:"المزيد من المراحل قريباً",back:"رجوع",colors:"الألوان",buy_clicks:"$1 → 100 نقرة",remaining:"متبقي",live_chat:"دردشة مباشرة",chat_placeholder:"قل شيئاً...",send:"إرسال",no_clicks:"لا توجد نقرات متبقية"},
+  ru:{phase1_live:"Фаза 1 идёт",phase1:"Фаза 1",phase2:"Фаза 2",phase3:"Фаза 3",phase4:"Фаза 4",phase1_dates:"Фаза 1: 10–23 июля 2026",more_phases:"Следующие фазы скоро",back:"Назад",colors:"Цвета",buy_clicks:"$1 → 100 кликов",remaining:"Осталось",live_chat:"Чат",chat_placeholder:"Скажите что-нибудь...",send:"Отправить",no_clicks:"Клики закончились"}
 };
 
 var lang = "zh";
@@ -206,21 +206,68 @@ function setLang(l) {
 
 // ═══════════ CANVAS ENGINE ═══════════
 var W = 1920, H = 1440;
+var GRID_SIZE = 10; // grid line every 10px
 var COLORS = [
-  "#FF4444","#FF8800","#FFCC00","#44CC44","#00CCCC","#4488FF","#8844CC","#FF66AA",
-  "#000000","#444444","#888888","#CCCCCC","#FFFFFF","#886644","#DAA520","#88CCFF"
+  // Reds (8)
+  "#FF0000","#FF3333","#FF5555","#FF7777","#CC0000","#AA0000","#880000","#FF9999",
+  // Oranges / Yellows (8)
+  "#FF8800","#FFAA00","#FFCC00","#FFDD44","#EE7700","#CC6600","#AA5500","#FFE088",
+  // Greens (8)
+  "#44FF44","#22DD22","#00CC00","#00AA00","#008800","#006600","#88FF88","#CCFFCC",
+  // Teals / Cyans (8)
+  "#00FFCC","#00DDAA","#00CCCC","#00AAAA","#008888","#006666","#88FFDD","#88DDCC",
+  // Blues (8)
+  "#4488FF","#3366DD","#2244CC","#2222AA","#111188","#000066","#88AAFF","#AACCFF",
+  // Purples / Magentas (8)
+  "#8844FF","#7722DD","#6600CC","#5500AA","#440088","#330066","#AA88FF","#CCAAFF",
+  // Pinks (8)
+  "#FF44AA","#FF2288","#FF0066","#DD0055","#CC0044","#AA0033","#FF88CC","#FFAADD",
+  // Browns / Golds (8)
+  "#886644","#AA7744","#CC9955","#DAA520","#C8961E","#B8860B","#FFCC88","#FFDDAA",
+  // Neutrals (8)
+  "#000000","#333333","#555555","#777777","#999999","#BBBBBB","#DDDDDD","#FFFFFF",
+  // Earth / Warm (8)
+  "#8B4513","#CD853F","#DEB887","#F5DEB3","#D2691E","#A0522D","#BC8F8F","#FFE4C4"
 ];
 var selectedColor = COLORS[0];
 var zoom = 0.4, panX = 0, panY = 0;
 var clicksRemaining = parseInt(localStorage.getItem("cm_clicks") || "0", 10);
-var pixelData = null;
+var gridImageData = null;  // pre-rendered grid layer
+var paintImageData = null; // user-placed pixels layer
 
-function hexToRGB(h) {
-  return {
-    r: parseInt(h.slice(1,3), 16),
-    g: parseInt(h.slice(3,5), 16),
-    b: parseInt(h.slice(5,7), 16)
-  };
+/* Pre-render the 1920x1440 grid as an ImageData buffer */
+function prerenderGrid() {
+  gridImageData = document.getElementById("pixel-canvas").getContext("2d").createImageData(W, H);
+  var d = gridImageData.data;
+  for (var y = 0; y < H; y++) {
+    for (var x = 0; x < W; x++) {
+      var i = (y * W + x) * 4;
+      if (x % GRID_SIZE === 0 || y % GRID_SIZE === 0) {
+        d[i]=232; d[i+1]=232; d[i+2]=232; d[i+3]=255;
+      } else {
+        d[i]=255; d[i+1]=255; d[i+2]=255; d[i+3]=255;
+      }
+    }
+  }
+}
+
+/* Composite grid + user pixels onto canvas */
+function compositeCanvas() {
+  var c = document.getElementById("pixel-canvas");
+  var ctx = c.getContext("2d");
+  // Start with grid
+  ctx.putImageData(gridImageData, 0, 0);
+  // Overlay user pixels (if any)
+  if (paintImageData) {
+    var src = paintImageData.data;
+    var dstCtx = c.getContext("2d");
+    // For performance, use drawImage from an offscreen canvas
+    var off = document.createElement("canvas");
+    off.width = W; off.height = H;
+    var offCtx = off.getContext("2d");
+    offCtx.putImageData(paintImageData, 0, 0);
+    ctx.drawImage(off, 0, 0);
+  }
 }
 
 function openCanvas() {
@@ -243,40 +290,58 @@ function buildCanvas() {
   var ctx = c.getContext("2d");
   ctx.imageSmoothingEnabled = false;
 
-  if (!pixelData) {
-    pixelData = ctx.createImageData(W, H);
-    for (var i = 0; i < pixelData.data.length; i += 4) {
-      pixelData.data[i]     = 255;
-      pixelData.data[i + 1] = 255;
-      pixelData.data[i + 2] = 255;
-      pixelData.data[i + 3] = 255;
+  // Pre-render grid once
+  if (!gridImageData) prerenderGrid();
+
+  // Init paint layer from localStorage
+  if (!paintImageData) {
+    var saved = localStorage.getItem("cm_pixels");
+    if (saved) {
+      paintImageData = ctx.createImageData(W, H);
+      var arr = JSON.parse(saved);
+      var pd = paintImageData.data;
+      for (var idx in arr) {
+        var color = arr[idx];
+        var pi = parseInt(idx, 10) * 4;
+        pd[pi] = (color >> 16) & 0xFF;
+        pd[pi+1] = (color >> 8) & 0xFF;
+        pd[pi+2] = color & 0xFF;
+        pd[pi+3] = 255;
+      }
+    } else {
+      paintImageData = ctx.createImageData(W, H);
+      for (var i = 0; i < paintImageData.data.length; i += 4) {
+        paintImageData.data[i+3] = 0; // transparent initially
+      }
     }
   }
-  ctx.putImageData(pixelData, 0, 0);
 
-  // color swatches
+  compositeCanvas();
+
+  // Color swatches
   var grid = document.getElementById("color-grid");
   grid.innerHTML = "";
   COLORS.forEach(function(col, i) {
     var sw = document.createElement("div");
     sw.className = "color-swatch" + (i === 0 ? " selected" : "");
     sw.style.background = col;
-    sw.addEventListener("click", function() {
-      selectedColor = col;
+    sw.dataset.color = col;
+    sw.addEventListener("click", function(e) {
+      selectedColor = e.currentTarget.dataset.color;
       var all = document.querySelectorAll(".color-swatch");
       for (var a = 0; a < all.length; a++) all[a].classList.remove("selected");
-      sw.classList.add("selected");
+      e.currentTarget.classList.add("selected");
     });
     grid.appendChild(sw);
   });
 
-  // fit with breathing room: 120px side margins, 100px top/bottom
+  // Fit with breathing room
   var vw = window.innerWidth - 260;
   var vh = window.innerHeight - 200;
   zoom = Math.min(vw / W, vh / H, 0.45);
   applyTransform();
 
-  // wheel zoom
+  // Wheel zoom
   c.addEventListener("wheel", function(e) {
     e.preventDefault();
     zoom *= e.deltaY > 0 ? 0.92 : 1.08;
@@ -284,7 +349,7 @@ function buildCanvas() {
     applyTransform();
   }, {passive: false});
 
-  // pan with middle-click or alt+drag
+  // Pan with middle-click or alt+drag
   var dragging = false, lastX, lastY;
   c.addEventListener("mousedown", function(e) {
     if (e.button === 1 || e.altKey) {
@@ -304,7 +369,7 @@ function buildCanvas() {
   });
   window.addEventListener("mouseup", function() { dragging = false; });
 
-  // place pixel
+  // Place pixel
   c.addEventListener("click", function(e) {
     if (dragging) return;
     if (clicksRemaining <= 0) { alert(t("no_clicks")); return; }
@@ -312,18 +377,37 @@ function buildCanvas() {
     var x = Math.floor((e.clientX - rect.left) / zoom);
     var y = Math.floor((e.clientY - rect.top) / zoom);
     if (x < 0 || x >= W || y < 0 || y >= H) return;
-    var rgb = hexToRGB(selectedColor);
+
+    // Store in paint layer
     var idx = (y * W + x) * 4;
-    pixelData.data[idx]     = rgb.r;
-    pixelData.data[idx + 1] = rgb.g;
-    pixelData.data[idx + 2] = rgb.b;
-    c.getContext("2d").putImageData(pixelData, 0, 0);
+    var rgb = (function(h) {
+      return {
+        r: parseInt(h.slice(1,3), 16),
+        g: parseInt(h.slice(3,5), 16),
+        b: parseInt(h.slice(5,7), 16)
+      };
+    })(selectedColor);
+    paintImageData.data[idx]     = rgb.r;
+    paintImageData.data[idx + 1] = rgb.g;
+    paintImageData.data[idx + 2] = rgb.b;
+    paintImageData.data[idx + 3] = 255;
+
+    // Persist to localStorage
+    var savedPixels = JSON.parse(localStorage.getItem("cm_pixels") || "{}");
+    var pxIdx = y * W + x;
+    var colorVal = (rgb.r << 16) | (rgb.g << 8) | rgb.b;
+    savedPixels[pxIdx] = colorVal;
+    localStorage.setItem("cm_pixels", JSON.stringify(savedPixels));
+
+    // Re-render composite
+    compositeCanvas();
+
     clicksRemaining--;
     localStorage.setItem("cm_clicks", clicksRemaining);
     updateClickCount();
   });
 
-  // pinch zoom (mobile)
+  // Pinch zoom (mobile)
   var lastDist = 0;
   c.addEventListener("touchstart", function(e) {
     if (e.touches.length === 2) {
@@ -358,7 +442,6 @@ function applyTransform() {
   wrap.style.left   = "50%";
   wrap.style.top    = "50%";
   wrap.style.transform = "translate(-50%, -50%)";
-  // pan offset: recenter after resize
   wrap.style.marginLeft = (panX * zoom) + "px";
   wrap.style.marginTop  = (panY * zoom) + "px";
 }
